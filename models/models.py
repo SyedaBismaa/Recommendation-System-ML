@@ -1,4 +1,5 @@
 import pandas as pd
+pd.set_option('future.infer_string', False)
 import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
@@ -102,35 +103,6 @@ for c in sorted(df['cluster'].unique()):
 
 df[product_cols].mean().sort_values(ascending=False)
 df.groupby('cluster')[product_cols].mean().T
-
-
-
-def recommend_products(customer_products, cluster_id, all_rules, df, product_cols, top_n=3):
-    customer_products = set(customer_products)
-    recommendations = []
-
-    if cluster_id in all_rules:
-        rules = all_rules[cluster_id].sort_values(['confidence','lift'], ascending=False)
-        for _, row in rules.iterrows():
-            antecedents = set(row['antecedents'])
-            consequents = set(row['consequents'])
-            if antecedents.issubset(customer_products) and not consequents.issubset(customer_products):
-                for item in consequents:
-                    if item not in customer_products and item not in recommendations:
-                        recommendations.append(item)
-            if len(recommendations) >= top_n:
-                break
-
-    # fallback: 
-    if len(recommendations) < top_n:
-        popular = df[df['cluster']==cluster_id][product_cols].mean().sort_values(ascending=False)
-        for item in popular.index:
-            if item not in customer_products and item not in recommendations:
-                recommendations.append(item)
-            if len(recommendations) >= top_n:
-                break
-
-    return recommendations[:top_n]
 
 
 joblib.dump(kmeans_final, 'kmeans_model.pkl')
